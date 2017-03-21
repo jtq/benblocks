@@ -28,18 +28,27 @@ var blockData = {
   }
 };
 
-function setTransmitting(transmitting) {
-  if(transmitting) {
-    digitalWrite(LED1, 1);  // Red = transmitting
-    digitalWrite(LED2, 0);  // Green = listening
-  }
-  else {
-    digitalWrite(LED1, 0);  // Red = transmitting
-    digitalWrite(LED2, 1);  // Green = listening
-  }
+function SourceBlock(data, serialPort) {
+  this.data = data;
+  this.serialPort = serialPort;
 }
 
-function setUp() {
+SourceBlock.prototype.setBusy = function(busy) {
+  digitalWrite(LED1, 0+busy);  // Red = busy
+  digitalWrite(LED2, 0+(!busy));  // Green = waiting
+};
+
+SourceBlock.prototype.onConnect = function(e) {
+  this.setBusy(true);
+
+  var strRepresentation = JSON.stringify(this.data);
+  //console.log("Connected - sending object", strRepresentation);
+  this.serialPort.print(strRepresentation + '\u0004');
+
+  this.setBusy(false);
+};
+
+SourceBlock.prototype.setUp = function() {
 
   USB.setConsole();
 
@@ -49,21 +58,14 @@ function setUp() {
 
   /**** Set up outputs ****/
 
-  Serial1.setup(9600, { tx:B6, rx:B7 });  // Data connection
-  setTransmitting(false);                 // Display indicator
+  this.serialPort.setup(9600, { tx:B6, rx:B7 });  // Data connection
+  this.setBusy(false);                 // Display indicator
 
   /**** Behaviours ****/
 
-  setWatch(function(e) {  // On connection, output block data
-    //console.log(e);
-    setTransmitting(true);
+  setWatch(this.onConnect.bind(this),  B3, { repeat: true, edge: 'rising', debounce:500 });  // On connection, output block data
+};
 
-    var strRepresentation = JSON.stringify(blockData);
-    //console.log("Connected - sending object", strRepresentation);
-    Serial1.print(strRepresentation + '\u0004');
+var block = new SourceBlock(blockData, Serial1);
 
-    setTransmitting(false);
-  }, B3, { repeat: true, edge: 'rising', debounce:500 });  
-}
-
-E.on('init', setUp);
+E.on('init', block.setUp.bind(block));
