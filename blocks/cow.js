@@ -63,7 +63,13 @@ SourceBlock.prototype.setUp = function() {
 
   /**** Behaviours ****/
 
-  setWatch(this.onConnect.bind(this),  B3, { repeat: true, edge: 'rising', debounce:500 });  // On connection, output block data
+  setWatch(function(e) {
+    setTimeout(function() {
+      if(digitalRead(B3) === 1) { // Check for debounce issues
+        this.onConnect(e);
+      }
+    }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
+  }.bind(this),  B3, { repeat: true, edge: 'rising', debounce:100 });  // On connection, output block data
 };
 
 var block = new SourceBlock(blockData, Serial1);

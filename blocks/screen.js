@@ -66,7 +66,13 @@ OutputBlock.prototype.setUp = function() {
 
   this.serialPort.on('data', this.onData.bind(this));
 
-  setWatch(this.onDisconnect.bind(this), B3, { repeat: true, edge: 'falling', debounce:500 });  
+  setWatch(function(e) {
+    setTimeout(function() {
+      if(digitalRead(B3) === 0) {
+        this.onDisconnect(e);
+      }
+    }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
+  }.bind(this), B3, { repeat: true, edge: 'falling', debounce:100 });
 
 };
 
