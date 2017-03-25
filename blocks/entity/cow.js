@@ -28,50 +28,8 @@ var blockData = {
   }
 };
 
-function SourceBlock(data, serialPort) {
-  this.data = data;
-  this.serialPort = serialPort;
-}
+var EntityBlock = require("http://127.0.0.1/benblocks/blocks/entity/index.js");
 
-SourceBlock.prototype.setBusy = function(busy) {
-  digitalWrite(LED1, 0+busy);  // Red = busy
-  digitalWrite(LED2, 0+(!busy));  // Green = waiting
-};
-
-SourceBlock.prototype.onConnect = function(e) {
-  this.setBusy(true);
-
-  var strRepresentation = JSON.stringify(this.data);
-  //console.log("Connected - sending object", strRepresentation);
-  this.serialPort.print(strRepresentation + '\u0004');
-
-  this.setBusy(false);
-};
-
-SourceBlock.prototype.setUp = function() {
-
-  USB.setConsole();
-
-  /**** Set up inputs ****/
-
-  pinMode(B3, 'input_pulldown');  // Listen for connection from later block
-
-  /**** Set up outputs ****/
-
-  this.serialPort.setup(9600, { tx:B6, rx:B7 });  // Data connection
-  this.setBusy(false);                 // Display indicator
-
-  /**** Behaviours ****/
-
-  setWatch(function(e) {
-    setTimeout(function() {
-      if(digitalRead(B3) === 1) { // Check for debounce issues
-        this.onConnect(e);
-      }
-    }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
-  }.bind(this),  B3, { repeat: true, edge: 'rising', debounce:100 });  // On connection, output block data
-};
-
-var block = new SourceBlock(blockData, Serial1);
+var block = new EntityBlock(blockData, Serial1);
 
 E.on('init', block.setUp.bind(block));
