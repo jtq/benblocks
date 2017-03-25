@@ -50,7 +50,7 @@ OutputBlock.prototype.setUp = function() {
   /**** Set up inputs ****/
   pinMode(B3, 'input_pulldown');  // Listen for connection from earlier block
 
-  this.serialPort.setup(9600, { tx:B6, rx:B7 });  // Data connection
+  this.serialPort.setup(28800, { tx:B6, rx:B7 });  // Data connection
   this.setBusy(false);
 
   this.serialPort.on('data', this.onData.bind(this));

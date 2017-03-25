@@ -38,7 +38,7 @@ EntityBlock.prototype.setUp = function() {
 
   /**** Set up outputs ****/
 
-  this.serialPort.setup(9600, { tx:B6, rx:B7 });  // Data connection
+  this.serialPort.setup(28800, { tx:B6, rx:B7 });  // Data connection
   this.setBusy(false);                 // Display indicator
 
   /**** Behaviours ****/
