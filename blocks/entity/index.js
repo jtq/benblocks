@@ -9,6 +9,9 @@
  */
 
 function EntityBlock(data, serialPort) {
+
+  this.EOT = '\u0004';
+
   this.data = data;
   this.serialPort = serialPort;
 }
@@ -23,7 +26,7 @@ EntityBlock.prototype.onConnect = function(e) {
 
   var strRepresentation = JSON.stringify(this.data);
   //console.log("Connected - sending object", strRepresentation);
-  this.serialPort.print(strRepresentation + '\u0004');
+  this.serialPort.print(strRepresentation + this.EOT);
 
   this.setBusy(false);
 };
@@ -38,7 +41,7 @@ EntityBlock.prototype.setUp = function() {
 
   /**** Set up outputs ****/
 
-  this.serialPort.setup(28800, { tx:B6, rx:B7 });  // Data connection
+  this.serialPort.setup(115200, { tx:B6, rx:B7 });  // Data connection
   this.setBusy(false);                 // Display indicator
 
   /**** Behaviours ****/

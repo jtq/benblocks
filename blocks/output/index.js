@@ -11,6 +11,8 @@
 /**** Define general "Output" block class, containing common connectivity setup/event-handling (to be moved into a separate module when possible) ****/
 function OutputBlock(serialPort) {
 
+  this.EOT = '\u0004';
+
   this.serialPort = serialPort;
 
   this.buffer = ''; // Buffer for de-chunking incoming serial data
@@ -28,10 +30,25 @@ OutputBlock.prototype.onData = function(data) { // Data received through serial 
 
   this.buffer += data;  // De-chunk into buffer, and process whole buffer once EOT control character is received
 
-  if(data.indexOf('\u0004') !== -1) { // ctrl+D - End of Transmission character
-    this.processBuffer(this.buffer);
-    this.buffer = '';  // And reset buffer
-    this.setBusy(false);
+  var eOTIndex = this.buffer.indexOf(this.EOT);
+
+  console.log("Received chunk EOT index: ", eOTIndex, " -->", data, "<--");
+  console.log("Total buffer -->", this.buffer, "<--");
+
+  if(eOTIndex !== -1) { // ctrl+D - End of Transmission character
+    try {
+      var message = this.buffer.substring(0, eOTIndex);
+      console.log("Message -->", message, "<--");
+      this.processBuffer(message);
+    }
+    catch(e) {
+      console.log("Error parsing buffer\nBuffer: -->", data, "<--");
+    }
+    finally {
+      this.buffer = this.buffer.substring(eOTIndex+this.EOT.length, this.buffer.length);  // And reset buffer
+      console.log("Remaining buffer -->", this.buffer, "<--");
+      this.setBusy(false);
+    }
   }
 };
 
@@ -50,7 +67,7 @@ OutputBlock.prototype.setUp = function() {
   /**** Set up inputs ****/
   pinMode(B3, 'input_pulldown');  // Listen for connection from earlier block
 
-  this.serialPort.setup(28800, { tx:B6, rx:B7 });  // Data connection
+  this.serialPort.setup(115200, { tx:B6, rx:B7 });  // Data connection
   this.setBusy(false);
 
   this.serialPort.on('data', this.onData.bind(this));

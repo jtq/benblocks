@@ -25,18 +25,21 @@ SoundBlock.prototype.constructor = SoundBlock;
 
 SoundBlock.prototype.setUp = function() {
   OutputBlock.prototype.setUp.call(this);
+
+  this.speakerOff();
 };
 
 SoundBlock.prototype.processBuffer = function(buffer) {
   var obj = null;
-  try {
+  
+  try {  
     obj = JSON.parse(buffer);
-    obj.soundValue.buffer = atob(obj.soundValue.buffer);
   }
   catch(e) {
-    console.log("Error parsing buffer\Buffer: -->", buffer, "<--\nJSON: -->", obj, "<--");
+    console.log('Error:', e.message);
   }
 
+  obj.soundValue.buffer = atob(obj.soundValue.buffer);
   var sound = obj.soundValue;
 
   var wave = new Waveform(sound.buffer.length, { bits:8 });
@@ -45,9 +48,16 @@ SoundBlock.prototype.processBuffer = function(buffer) {
   analogWrite(this.speaker, 0.5, {freq:20000}); 
   wave.startOutput(this.speaker, sound.samples);
 
+  var soundDuration = (sound.buffer.length / sound.samples) * 1000;
+
+  setTimeout(this.speakerOff.bind(this), soundDuration);  // Explicitly turn speaker off after sound finishes, to avoid audible analogue noise on pin
 };
 
 SoundBlock.prototype.onDisconnect = function(e) {  // On loss of connection, stop sound
+  this.speakerOff();
+};
+
+SoundBlock.prototype.speakerOff = function() {
   digitalWrite(this.speaker, 0);
 };
 
