@@ -26,27 +26,21 @@ OutputBlock.prototype.setBusy = function(busy) {
 OutputBlock.prototype.onData = function(data) { // Data received through serial connection
   this.setBusy(true);
 
-  //console.log("Received", typeof data, data);
-
   this.buffer += data;  // De-chunk into buffer, and process whole buffer once EOT control character is received
 
-  var eOTIndex = this.buffer.indexOf(this.EOT);
-
-  console.log("Received chunk EOT index: ", eOTIndex, " -->", data, "<--");
-  console.log("Total buffer -->", this.buffer, "<--");
+  var eOTIndex = data.indexOf(this.EOT);
 
   if(eOTIndex !== -1) { // ctrl+D - End of Transmission character
     try {
+      eOTIndex += this.buffer.length; // Convert between data chunk and whole-buffer-to-date index
       var message = this.buffer.substring(0, eOTIndex);
-      console.log("Message -->", message, "<--");
       this.processBuffer(message);
     }
     catch(e) {
-      console.log("Error parsing buffer\nBuffer: -->", data, "<--");
+      console.log("Error parsing message: -->", message, "<--");
     }
     finally {
       this.buffer = this.buffer.substring(eOTIndex+this.EOT.length, this.buffer.length);  // And reset buffer
-      console.log("Remaining buffer -->", this.buffer, "<--");
       this.setBusy(false);
     }
   }
@@ -58,6 +52,7 @@ OutputBlock.prototype.processBuffer = function(buffer) {  // Process complete (d
 
 OutputBlock.prototype.onDisconnect = function(e) {  // On loss of connection
   //console.log('Disconnect');
+  this.buffer = '';
 };
 
 OutputBlock.prototype.setUp = function() {

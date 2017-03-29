@@ -31,15 +31,15 @@ SoundBlock.prototype.setUp = function() {
 
 SoundBlock.prototype.processBuffer = function(buffer) {
   var obj = null;
-  
-  try {  
+
+  try {
     obj = JSON.parse(buffer);
   }
   catch(e) {
     console.log('Error:', e.message);
   }
 
-  obj.soundValue.buffer = atob(obj.soundValue.buffer);
+  obj.soundValue.buffer = E.toArrayBuffer(atob(obj.soundValue.buffer));
   var sound = obj.soundValue;
 
   var wave = new Waveform(sound.buffer.length, { bits:8 });
@@ -54,6 +54,7 @@ SoundBlock.prototype.processBuffer = function(buffer) {
 };
 
 SoundBlock.prototype.onDisconnect = function(e) {  // On loss of connection, stop sound
+  OutputBlock.prototype.onDisconnect.call(this, e);
   this.speakerOff();
 };
 

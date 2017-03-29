@@ -25,8 +25,8 @@ EntityBlock.prototype.onConnect = function(e) {
   this.setBusy(true);
 
   var strRepresentation = JSON.stringify(this.data);
-  //console.log("Connected - sending object", strRepresentation);
-  this.serialPort.print(strRepresentation + this.EOT);
+  this.serialPort.print(strRepresentation);
+  this.serialPort.print(this.EOT);
 
   this.setBusy(false);
 };
