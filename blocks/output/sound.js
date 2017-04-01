@@ -1,7 +1,7 @@
 /****
  * Hardware spec:
  *  Hardware:
- *    1 x Analougue speaker
+ *    1 x Analogue speaker
  *  Pins:
  *    A5: Input on speaker
 
@@ -42,13 +42,13 @@ SoundBlock.prototype.processBuffer = function(buffer) {
   obj.soundValue.buffer = E.toArrayBuffer(atob(obj.soundValue.buffer));
   var sound = obj.soundValue;
 
-  var wave = new Waveform(sound.buffer.length, { bits:8 });
-  wave.buffer.set(sound.buffer);
+  this.wave = new Waveform(sound.buffer.length, { bits:8 });
+  this.wave.buffer.set(sound.buffer);
 
   analogWrite(this.speaker, 0.5, {freq:20000}); 
-  wave.startOutput(this.speaker, sound.samples);
+  this.wave.startOutput(this.speaker, sound.samples, {repeat:true});
 
-  var soundDuration = (sound.buffer.length / sound.samples) * 1000;
+  var soundDuration = (sound.buffer.length / sound.samples) * 1000 * obj.integerValue;
 
   setTimeout(this.speakerOff.bind(this), soundDuration);  // Explicitly turn speaker off after sound finishes, to avoid audible analogue noise on pin
 };
@@ -59,6 +59,10 @@ SoundBlock.prototype.onDisconnect = function(e) {  // On loss of connection, sto
 };
 
 SoundBlock.prototype.speakerOff = function() {
+  if(this.wave) {
+    this.wave.stop();
+  }
+  this.wave = null;
   digitalWrite(this.speaker, 0);
 };
 
