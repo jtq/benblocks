@@ -75,9 +75,12 @@ ScreenBlock.prototype.processBuffer = function(buffer) {
 
     var xOffset = Math.floor((this.dimensions.width - obj.imageValue.width) / 2);
     var yOffset = Math.floor((this.dimensions.height - obj.imageValue.height) / 2);
-    g.drawImage(obj.imageValue, xOffset, yOffset);
-    // send the graphics to the display
-    g.flip();
+
+    //g.drawImage(obj.imageValue, xOffset, yOffset);
+    //g.drawRect(0, 0, this.dimensions.width-1, this.dimensions.height-1);
+    this.drawImages(obj.imageValue, obj.integerValue, g);
+    g.flip(); // send the graphics to the display
+
   }.bind(this));
 };
 
@@ -87,6 +90,141 @@ ScreenBlock.prototype.onDisconnect = function(e) {  // On loss of connection, cl
     g.flip();
   });
 };
+
+ScreenBlock.prototype.drawImages = function(image, numImages, g) {
+  var sqrt = Math.sqrt(numImages);
+  var images = {
+    across: Math.ceil(sqrt),
+    down: Math.round(sqrt)
+  };
+
+  var eachImage = {
+    width: Math.floor(this.dimensions.width / images.across),
+    height: Math.floor(this.dimensions.height / images.down)
+  };
+
+  //dumpBuffer(image.buffer, image.width, image.height);
+
+  var resizedImage = this.resizeImage(image, eachImage);
+
+  //dumpBuffer(resizedImage.buffer, resizedImage.width, resizedImage.height);
+
+  var imagesDrawn = 0;
+
+//  console.log(eachImage);
+//  console.log(resizedImage.width, resizedImage.height);
+
+  var xOffset = Math.round((eachImage.width-resizedImage.width)/2);
+  var yOffset = Math.round((eachImage.height-resizedImage.height)/2);
+
+  for(var j=0; j<images.down && imagesDrawn < numImages; j++) {
+    for(var i=0; i<images.across && imagesDrawn < numImages; i++) {
+      g.drawImage(
+        resizedImage,
+        (i*eachImage.width)+xOffset,
+        (j*eachImage.height)+yOffset
+      );
+      imagesDrawn++;
+    }
+  }
+};
+
+ScreenBlock.prototype.resizeImage = function(image, container) {
+  var originalBits = unpackBufferIntoBitmap(image.buffer, image.width, image.height);
+  var conversionFactor = Math.min(container.width/image.width, container.height/image.height);
+
+  //console.log(image);
+  //console.log(container);
+  //console.log(conversionFactor);
+
+  var newWidth = Math.round(image.width * conversionFactor);
+  var newHeight = Math.round(image.height * conversionFactor);
+  var newBits = new Uint8Array(newWidth*newHeight);
+  newBits.fill(0);
+
+  var newImage = {
+    width: newWidth,
+    height: newHeight,
+    bpp: image.bpp,
+    transparent: image.transparent,
+    buffer: null
+  };
+
+  var convertedY, convertedX;
+
+  for(var y=0; y<image.height; y++) {
+    convertedY = Math.round(y * conversionFactor);
+    for(var x=0; x<image.width; x++) {
+      convertedX = Math.round(x * conversionFactor);
+      var origIndex = (image.width*y)+x;
+      var newIndex = (newWidth*convertedY)+convertedX;
+
+      newBits[newIndex] = newBits[newIndex] | originalBits[origIndex];
+    }
+  }
+
+  //dumpBitmap(newBits, newWidth, newHeight);
+
+  //console.log('Done: ', newBits.length, ' @ ', newWidth, 'x', newHeight);
+
+  newImage.buffer = packBitmapIntoBuffer(newBits);
+
+  return newImage;
+};
+
+function unpackBufferIntoBitmap(arrayBuffer, width, height) {
+  var array = new Uint8Array(arrayBuffer);
+  var bits = new Uint8Array(width*height);
+  var newByte, b;
+  for(var i=0; i<array.length; i++) {
+    b = array[i];
+    newByte = [
+      0 + !!(b&128),  // most significant byte
+      0 + !!(b&64),
+      0 + !!(b&32),
+      0 + !!(b&16),
+      0 + !!(b&8),
+      0 + !!(b&4),
+      0 + !!(b&2),
+      0 + !!(b&1)     // least significant bit
+    ];
+    bits.set(newByte, i*8);
+  }
+
+  return bits;
+}
+
+function packBitmapIntoBuffer(bitmap) {
+  var packed = new Uint8Array(bitmap.length/8);
+  var offset;
+  for(var i=0; i<packed.length; i++) {
+    offset = i*8;
+    packed[i] =
+      (bitmap[offset]     * 128) +
+      (bitmap[offset+1]   * 64) +
+      (bitmap[offset+2]   * 32) +
+      (bitmap[offset+3]   * 16) +
+      (bitmap[offset+4]   * 8) +
+      (bitmap[offset+5]   * 4) +
+      (bitmap[offset+6]   * 2) +
+      (bitmap[offset+7]   * 1);
+  }
+
+  return packed.buffer;
+}
+
+function dumpBitmap(bitmap, width, height) {
+  for(var i=0; i<height; i++) {
+    console.log(bitmap.slice(width*i, width*(i+1)));
+  }
+}
+
+function dumpBuffer(imageBuffer, width, height) {
+  var bits = unpackBufferIntoBitmap(imageBuffer, width, height);
+
+  dumpBitmap(bits, width, height);
+}
+
 
 
 var block = new ScreenBlock(Serial1);
