@@ -71,8 +71,8 @@ ScreenBlock.prototype.objectReceived = function(obj) {
     var yOffset = Math.floor((this.dimensions.height - obj.imageValue.height) / 2);
 
     //g.drawRect(0, 0, this.dimensions.width-1, this.dimensions.height-1);  // Draw border (useful for debugging)
-    //g.drawImage(obj.imageValue, xOffset, yOffset);  // Draw raw image
-    this.drawImages(obj.imageValue, obj.integerValue, g); // Draw resized image
+    g.drawImage(obj.imageValue, xOffset, yOffset);  // Draw raw image
+    //this.drawImages(obj.imageValue, obj.integerValue, g); // Draw resized image
     g.flip(); // send the graphics to the display
 
   }.bind(this));
