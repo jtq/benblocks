@@ -44,6 +44,7 @@ ScreenBlock.prototype.setUp = function() {
 
   this.screenReady = new Promise(function(resolve, reject) {   // screen
     A5.write(0); // GND
+    //A6.write(1); // Backlight
     A7.write(1); // VCC
 
     // Setup SPI
