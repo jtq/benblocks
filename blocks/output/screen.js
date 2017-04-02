@@ -60,25 +60,18 @@ ScreenBlock.prototype.setUp = function() {
   });
 };
 
-ScreenBlock.prototype.processBuffer = function(buffer) {
+ScreenBlock.prototype.objectReceived = function(obj) {
   this.screenReady.then(function(g) {
     g.clear();
 
-    var obj = null;
-    try {
-      obj = JSON.parse(buffer);
-      obj.imageValue.buffer = E.toArrayBuffer(atob(obj.imageValue.buffer));
-    }
-    catch(e) {
-      console.log("Error parsing buffer\Buffer: -->", buffer, "<--\nJSON: -->", obj, "<--");
-    }
+    obj.imageValue.buffer = E.toArrayBuffer(atob(obj.imageValue.buffer));
 
     var xOffset = Math.floor((this.dimensions.width - obj.imageValue.width) / 2);
     var yOffset = Math.floor((this.dimensions.height - obj.imageValue.height) / 2);
 
-    //g.drawImage(obj.imageValue, xOffset, yOffset);
-    //g.drawRect(0, 0, this.dimensions.width-1, this.dimensions.height-1);
-    this.drawImages(obj.imageValue, obj.integerValue, g);
+    //g.drawRect(0, 0, this.dimensions.width-1, this.dimensions.height-1);  // Draw border (useful for debugging)
+    //g.drawImage(obj.imageValue, xOffset, yOffset);  // Draw raw image
+    this.drawImages(obj.imageValue, obj.integerValue, g); // Draw resized image
     g.flip(); // send the graphics to the display
 
   }.bind(this));

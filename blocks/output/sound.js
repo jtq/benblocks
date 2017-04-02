@@ -29,16 +29,7 @@ SoundBlock.prototype.setUp = function() {
   this.speakerOff();
 };
 
-SoundBlock.prototype.processBuffer = function(buffer) {
-  var obj = null;
-
-  try {
-    obj = JSON.parse(buffer);
-  }
-  catch(e) {
-    console.log('Error:', e.message);
-  }
-
+SoundBlock.prototype.objectReceived = function(obj) {
   obj.soundValue.buffer = E.toArrayBuffer(atob(obj.soundValue.buffer));
   var sound = obj.soundValue;
 

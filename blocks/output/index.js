@@ -34,10 +34,11 @@ OutputBlock.prototype.onData = function(data) { // Data received through serial 
     try {
       eOTIndex += this.buffer.length; // Convert between data chunk and whole-buffer-to-date index
       var message = this.buffer.substring(0, eOTIndex);
-      this.processBuffer(message);
+
+      this.objectReceived(JSON.parse(message));
     }
     catch(e) {
-      console.log("Error parsing message: -->", message, "<--");
+      console.log("Error parsing message (" + e.message + ") -->", message, "<--");
     }
     finally {
       this.buffer = this.buffer.substring(eOTIndex+this.EOT.length, this.buffer.length);  // And reset buffer
@@ -46,8 +47,8 @@ OutputBlock.prototype.onData = function(data) { // Data received through serial 
   }
 };
 
-OutputBlock.prototype.processBuffer = function(buffer) {  // Process complete (de-chunked) data object
-  // console.log('Buffer to process:', buffer);
+OutputBlock.prototype.objectReceived = function(obj) {  // Process complete (de-chunked) data object
+  //console.log('Received object:', obj);
 };
 
 OutputBlock.prototype.onDisconnect = function(e) {  // On loss of connection
