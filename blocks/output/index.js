@@ -11,11 +11,13 @@
 /**** Define general "Output" block class, containing common connectivity setup/event-handling (to be moved into a separate module when possible) ****/
 function OutputBlock(serialPort) {
 
+  this.SOT = '\u0002';
   this.EOT = '\u0004';
 
   this.serialPort = serialPort;
 
   this.buffer = ''; // Buffer for de-chunking incoming serial data
+  this.timerId = null;
 }
 
 OutputBlock.prototype.setBusy = function(busy) {
@@ -26,22 +28,28 @@ OutputBlock.prototype.setBusy = function(busy) {
 OutputBlock.prototype.onData = function(data) { // Data received through serial connection
   this.setBusy(true);
 
-  this.buffer += data;  // De-chunk into buffer, and process whole buffer once EOT control character is received
-
+  var sOTIndex = data.indexOf(this.SOT);
   var eOTIndex = data.indexOf(this.EOT);
 
-  if(eOTIndex !== -1) { // ctrl+D - End of Transmission character
-    try {
-      eOTIndex += this.buffer.length; // Convert between data chunk and whole-buffer-to-date index
-      var message = this.buffer.substring(0, eOTIndex);
+  var messageStart = sOTIndex === -1 ? 0 : sOTIndex+1;
+  var messageEnd = eOTIndex === -1 ? data.length : eOTIndex;
 
-      this.objectReceived(JSON.parse(message));
+  if(sOTIndex !== -1) { // If data includes SOT, replace existing buffer
+    this.buffer = data.substring(messageStart, messageEnd);
+  }
+  else {    // Else append to buffer
+    this.buffer += data.substring(messageStart, messageEnd);
+  }
+
+  if(eOTIndex !== -1) { // ctrl+D - End of Transmission character was encountered
+    try {
+      this.objectReceived(JSON.parse(this.buffer));
     }
     catch(e) {
-      console.log("Error parsing message (" + e.message + ") -->", message, "<--");
+      console.log("Error parsing message (" + e + ") -->", this.buffer, "<--");
     }
     finally {
-      this.buffer = this.buffer.substring(eOTIndex+this.EOT.length, this.buffer.length);  // And reset buffer
+      this.buffer = '';  // And reset buffer
       this.setBusy(false);
     }
   }
@@ -54,6 +62,7 @@ OutputBlock.prototype.objectReceived = function(obj) {  // Process complete (de-
 OutputBlock.prototype.onDisconnect = function(e) {  // On loss of connection
   //console.log('Disconnect');
   this.buffer = '';
+  this.setBusy(false);
 };
 
 OutputBlock.prototype.setUp = function() {
@@ -69,12 +78,16 @@ OutputBlock.prototype.setUp = function() {
   this.serialPort.on('data', this.onData.bind(this));
 
   setWatch(function(e) {
-    setTimeout(function() {
-      if(digitalRead(B3) === 0) {
-        this.onDisconnect(e);
-      }
-    }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
-  }.bind(this), B3, { repeat: true, edge: 'falling', debounce:100 });
+
+    if(!this.timerId) {
+      this.timerId = setTimeout(function() {
+        this.timerId = null;
+        if(digitalRead(B3) === 0) {
+          this.onDisconnect(e);
+        }
+      }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
+    }
+  }.bind(this), B3, { repeat: true, edge: 'falling'});
 
 };
 

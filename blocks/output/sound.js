@@ -30,6 +30,7 @@ SoundBlock.prototype.setUp = function() {
 };
 
 SoundBlock.prototype.objectReceived = function(obj) {
+  OutputBlock.prototype.objectReceived.call(this, obj);
   obj.soundValue.buffer = E.toArrayBuffer(atob(obj.soundValue.buffer));
   var sound = obj.soundValue;
 

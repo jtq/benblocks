@@ -10,10 +10,13 @@
 
 function EntityBlock(data, serialPort) {
 
+  this.SOT = '\u0002';
   this.EOT = '\u0004';
 
   this.data = data;
   this.serialPort = serialPort;
+
+  this.timerId = null;
 }
 
 EntityBlock.prototype.setBusy = function(busy) {
@@ -25,6 +28,7 @@ EntityBlock.prototype.onConnect = function(e) {
   this.setBusy(true);
 
   var strRepresentation = JSON.stringify(this.data);
+  this.serialPort.print(this.SOT);
   this.serialPort.print(strRepresentation);
   this.serialPort.print(this.EOT);
 
@@ -47,12 +51,15 @@ EntityBlock.prototype.setUp = function() {
   /**** Behaviours ****/
 
   setWatch(function(e) {
-    setTimeout(function() {
-      if(digitalRead(B3) === 1) { // Check for debounce issues
-        this.onConnect(e);
-      }
-    }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
-  }.bind(this),  B3, { repeat: true, edge: 'rising', debounce:100 });  // On connection, output block data
+    if(!this.timerId) {
+      this.timerId = setTimeout(function() {
+        this.timerId = null;
+        if(digitalRead(B3) === 1) { // Check for debounce issues
+          this.onConnect(e);
+        }
+      }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
+    }
+  }.bind(this),  B3, { repeat: true, edge: 'rising' });  // On connection, output block data
 };
 
 module.exports = EntityBlock;

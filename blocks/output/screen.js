@@ -44,7 +44,7 @@ ScreenBlock.prototype.setUp = function() {
 
   this.screenReady = new Promise(function(resolve, reject) {   // screen
     A5.write(0); // GND
-    //A6.write(1); // Backlight
+    A6.write(1); // Backlight
     A7.write(1); // VCC
 
     // Setup SPI
@@ -62,6 +62,7 @@ ScreenBlock.prototype.setUp = function() {
 };
 
 ScreenBlock.prototype.objectReceived = function(obj) {
+  OutputBlock.prototype.objectReceived.call(this, obj);
   this.screenReady.then(function(g) {
     g.clear();
 
@@ -79,6 +80,7 @@ ScreenBlock.prototype.objectReceived = function(obj) {
 };
 
 ScreenBlock.prototype.onDisconnect = function(e) {  // On loss of connection, clear screen
+  OutputBlock.prototype.onDisconnect.call(this, e);
   this.screenReady.then(function(g) {
     g.clear();
     g.flip();
