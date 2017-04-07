@@ -16,23 +16,18 @@ function EntityBlock(data, outputConnector) {
 
   this.data = data;
 
-  this.output.on('connect', this.sendData.bind(this));
+  this.output.on('connect', function() {
+    //console.log('EntityBlock: sending data');
+    this.setBusy(true);
+
+    this.output.sendObject(this.data);
+
+    this.setBusy(false);
+    //console.log('EntityBlock: data sent');
+  }.bind(this));
 }
 
 EntityBlock.prototype = Object.create(Block.prototype);
 EntityBlock.prototype.constructor = EntityBlock;
-
-EntityBlock.prototype.sendData = function() {
-  console.log('EntityBlock: sending data');
-  this.setBusy(true);
-
-  var strRepresentation = JSON.stringify(this.data);
-  this.output.serial.print(this.SOT);
-  this.output.serial.print(strRepresentation);
-  this.output.serial.print(this.EOT);
-
-  this.setBusy(false);
-  console.log('EntityBlock: data sent');
-};
 
 module.exports = EntityBlock;

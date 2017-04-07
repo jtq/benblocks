@@ -32,7 +32,7 @@ SoundBlock.prototype.constructor = SoundBlock;
 
 SoundBlock.prototype.objectReceived = function(obj) {
 
-  console.log('SoundBlock: playing sound');
+  //console.log('SoundBlock: playing sound');
 
   obj.soundValue.buffer = E.toArrayBuffer(atob(obj.soundValue.buffer));
   var sound = obj.soundValue;
@@ -59,6 +59,7 @@ SoundBlock.prototype.speakerOff = function() {
 var block = null;
 
 function init() {
+  USB.setConsole();
   block = new SoundBlock(A5);
 }
 

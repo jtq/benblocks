@@ -12,7 +12,6 @@ var EventSource = require('https://github.com/jtq/event-source/blob/master/index
  */
 
 function Block(outputConnector) {
-  USB.setConsole();
 
   EventSource.call(this); // Give this object event-handling capabilities
 

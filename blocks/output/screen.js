@@ -46,7 +46,7 @@ function ScreenBlock(inputSerial, outputSerial) {
 
     // Init LCD
     var g = require("PCD8544").connect(spi,B13,B14,B15, function() {
-      console.log('Screen ready');
+      ////console.log('Screen ready');
       g.clear();
       g.flip();
       resolve(g);
@@ -62,7 +62,7 @@ ScreenBlock.prototype.constructor = ScreenBlock;
 
 ScreenBlock.prototype.objectReceived = function(obj) {
 
-  console.log('ScreenBlock: displaying graphic');
+  //console.log('ScreenBlock: displaying graphic');
 
   this.screenReady.then(function(g) {
     g.clear();
@@ -108,8 +108,8 @@ ScreenBlock.prototype.drawImages = function(image, numImages, g) {
 
   var imagesDrawn = 0;
 
-//  console.log(eachImage);
-//  console.log(resizedImage.width, resizedImage.height);
+//  //console.log(eachImage);
+//  //console.log(resizedImage.width, resizedImage.height);
 
   var xOffset = Math.round((eachImage.width-resizedImage.width)/2);
   var yOffset = Math.round((eachImage.height-resizedImage.height)/2);
@@ -130,9 +130,9 @@ ScreenBlock.prototype.resizeImage = function(image, container) {
   var originalBits = unpackBufferIntoBitmap(image.buffer, image.width, image.height);
   var conversionFactor = Math.min(container.width/image.width, container.height/image.height);
 
-  //console.log(image);
-  //console.log(container);
-  //console.log(conversionFactor);
+  ////console.log(image);
+  ////console.log(container);
+  ////console.log(conversionFactor);
 
   var newWidth = Math.round(image.width * conversionFactor);
   var newHeight = Math.round(image.height * conversionFactor);
@@ -162,7 +162,7 @@ ScreenBlock.prototype.resizeImage = function(image, container) {
 
   //dumpBitmap(newBits, newWidth, newHeight);
 
-  //console.log('Done: ', newBits.length, ' @ ', newWidth, 'x', newHeight);
+  ////console.log('Done: ', newBits.length, ' @ ', newWidth, 'x', newHeight);
 
   newImage.buffer = packBitmapIntoBuffer(newBits);
 
@@ -212,7 +212,7 @@ function packBitmapIntoBuffer(bitmap) {
 
 function dumpBitmap(bitmap, width, height) {
   for(var i=0; i<height; i++) {
-    console.log(bitmap.slice(width*i, width*(i+1)));
+    //console.log(bitmap.slice(width*i, width*(i+1)));
   }
 }
 
@@ -225,6 +225,7 @@ function dumpBuffer(imageBuffer, width, height) {
 
 var block = null;
 function init() {
+  USB.setConsole();
   block = new ScreenBlock();
 }
 

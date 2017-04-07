@@ -32,6 +32,7 @@ var blockData = {
 var block = null;
 
 function init() {
+  USB.setConsole();
   block = new EntityBlock(blockData);
 }
 
