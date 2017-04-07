@@ -1,3 +1,5 @@
+var Block = require("http://127.0.0.1/benblocks/blocks/index.js");
+
 /****
  * Hardware spec:
  *  Pins:
@@ -8,58 +10,29 @@
  *    B7: B6 on other Pico
  */
 
-function EntityBlock(data, serialPort) {
+function EntityBlock(data, outputConnector) {
 
-  this.SOT = '\u0002';
-  this.EOT = '\u0004';
+  Block.call(this, outputConnector);
 
   this.data = data;
-  this.serialPort = serialPort;
 
-  this.timerId = null;
+  this.output.on('connect', this.sendData.bind(this));
 }
 
-EntityBlock.prototype.setBusy = function(busy) {
-  digitalWrite(LED1, 0+busy);  // Red = busy
-  digitalWrite(LED2, 0+(!busy));  // Green = waiting
-};
+EntityBlock.prototype = Object.create(Block.prototype);
+EntityBlock.prototype.constructor = EntityBlock;
 
-EntityBlock.prototype.onConnect = function(e) {
+EntityBlock.prototype.sendData = function() {
+  console.log('EntityBlock: sending data');
   this.setBusy(true);
 
   var strRepresentation = JSON.stringify(this.data);
-  this.serialPort.print(this.SOT);
-  this.serialPort.print(strRepresentation);
-  this.serialPort.print(this.EOT);
+  this.output.serial.print(this.SOT);
+  this.output.serial.print(strRepresentation);
+  this.output.serial.print(this.EOT);
 
   this.setBusy(false);
-};
-
-EntityBlock.prototype.setUp = function() {
-
-  USB.setConsole();
-
-  /**** Set up inputs ****/
-
-  pinMode(B3, 'input_pulldown');  // Listen for connection from later block
-
-  /**** Set up outputs ****/
-
-  this.serialPort.setup(115200, { tx:B6, rx:B7 });  // Data connection
-  this.setBusy(false);                 // Display indicator
-
-  /**** Behaviours ****/
-
-  setWatch(function(e) {
-    if(!this.timerId) {
-      this.timerId = setTimeout(function() {
-        this.timerId = null;
-        if(digitalRead(B3) === 1) { // Check for debounce issues
-          this.onConnect(e);
-        }
-      }.bind(this), 500);   // Wait for debounce and then check empirically whether connection exists
-    }
-  }.bind(this),  B3, { repeat: true, edge: 'rising' });  // On connection, output block data
+  console.log('EntityBlock: data sent');
 };
 
 module.exports = EntityBlock;

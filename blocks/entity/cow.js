@@ -1,3 +1,5 @@
+var EntityBlock = require("http://127.0.0.1/benblocks/blocks/entity/index.js");
+
 /****
  * Hardware spec:
  *  Pins:
@@ -27,8 +29,10 @@ var blockData = {
   }
 };
 
-var EntityBlock = require("http://127.0.0.1/benblocks/blocks/entity/index.js");
+var block = null;
 
-var block = new EntityBlock(blockData, Serial1);
+function init() {
+  block = new EntityBlock(blockData);
+}
 
-E.on('init', block.setUp.bind(block));
+E.on('init', init);

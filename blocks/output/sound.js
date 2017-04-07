@@ -15,22 +15,25 @@
 var OutputBlock = require("http://127.0.0.1/benblocks/blocks/output/index.js");
 
 /**** Define specific "Screen" block class that descends from OutputBlock ****/
-function SoundBlock(speakerPin, inputSerialPort) {
-  OutputBlock.call(this, inputSerialPort);
+function SoundBlock(speakerPin, inputConnector, outputConnector) {
+
+  OutputBlock.call(this, inputConnector, outputConnector);
+
   this.speaker = speakerPin;
+
+  this.speakerOff();
+
+  this.output.on('objectReceived', this.objectReceived.bind(this));
+  this.output.on('disconnect', this.speakerOff.bind(this));
 }
 
 SoundBlock.prototype = Object.create(OutputBlock.prototype);
 SoundBlock.prototype.constructor = SoundBlock;
 
-SoundBlock.prototype.setUp = function() {
-  OutputBlock.prototype.setUp.call(this);
-
-  this.speakerOff();
-};
-
 SoundBlock.prototype.objectReceived = function(obj) {
-  OutputBlock.prototype.objectReceived.call(this, obj);
+
+  console.log('SoundBlock: playing sound');
+
   obj.soundValue.buffer = E.toArrayBuffer(atob(obj.soundValue.buffer));
   var sound = obj.soundValue;
 
@@ -45,11 +48,6 @@ SoundBlock.prototype.objectReceived = function(obj) {
   setTimeout(this.speakerOff.bind(this), soundDuration);  // Explicitly turn speaker off after sound finishes, to avoid audible analogue noise on pin
 };
 
-SoundBlock.prototype.onDisconnect = function(e) {  // On loss of connection, stop sound
-  OutputBlock.prototype.onDisconnect.call(this, e);
-  this.speakerOff();
-};
-
 SoundBlock.prototype.speakerOff = function() {
   if(this.wave) {
     this.wave.stop();
@@ -58,7 +56,10 @@ SoundBlock.prototype.speakerOff = function() {
   digitalWrite(this.speaker, 0);
 };
 
+var block = null;
 
-var block = new SoundBlock(A5, Serial1);
+function init() {
+  block = new SoundBlock(A5);
+}
 
-E.on('init', block.setUp.bind(block));
+E.on('init', init);

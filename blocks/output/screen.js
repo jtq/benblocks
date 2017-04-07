@@ -22,8 +22,9 @@
 var OutputBlock = require("http://127.0.0.1/benblocks/blocks/output/index.js");
 
 /**** Define specific "Screen" block class that descends from OutputBlock ****/
-function ScreenBlock(inputSerialPort) {
-  OutputBlock.call(this, inputSerialPort);
+function ScreenBlock(inputSerial, outputSerial) {
+
+  OutputBlock.call(this, inputSerial, outputSerial);
 
   this.dimensions = { // LCD dimensions
     width: 84,
@@ -31,14 +32,6 @@ function ScreenBlock(inputSerialPort) {
   };
 
   this.screenReady = null;  // Screen-initialised Promise
-}
-
-ScreenBlock.prototype = Object.create(OutputBlock.prototype);
-ScreenBlock.prototype.constructor = ScreenBlock;
-
-ScreenBlock.prototype.setUp = function() {
-
-  OutputBlock.prototype.setUp.call(this);
 
   /**** Set up screen ****/
 
@@ -53,16 +46,24 @@ ScreenBlock.prototype.setUp = function() {
 
     // Init LCD
     var g = require("PCD8544").connect(spi,B13,B14,B15, function() {
-      //console.log('Screen ready');
+      console.log('Screen ready');
       g.clear();
       g.flip();
       resolve(g);
     });
-  });
-};
+  }.bind(this));
+
+  this.output.on('objectReceived', this.objectReceived.bind(this));
+  this.output.on('disconnect', this.clearScreen.bind(this));
+}
+
+ScreenBlock.prototype = Object.create(OutputBlock.prototype);
+ScreenBlock.prototype.constructor = ScreenBlock;
 
 ScreenBlock.prototype.objectReceived = function(obj) {
-  OutputBlock.prototype.objectReceived.call(this, obj);
+
+  console.log('ScreenBlock: displaying graphic');
+
   this.screenReady.then(function(g) {
     g.clear();
 
@@ -79,8 +80,8 @@ ScreenBlock.prototype.objectReceived = function(obj) {
   }.bind(this));
 };
 
-ScreenBlock.prototype.onDisconnect = function(e) {  // On loss of connection, clear screen
-  OutputBlock.prototype.onDisconnect.call(this, e);
+ScreenBlock.prototype.clearScreen = function(e) {  // On loss of connection, clear screen
+
   this.screenReady.then(function(g) {
     g.clear();
     g.flip();
@@ -222,7 +223,9 @@ function dumpBuffer(imageBuffer, width, height) {
 }
 
 
+var block = null;
+function init() {
+  block = new ScreenBlock();
+}
 
-var block = new ScreenBlock(Serial1);
-
-E.on('init', block.setUp.bind(block));
+E.on('init', init);
