@@ -11,12 +11,6 @@
  *    A7: VCC on LCD
  *    A6: LED on LCD
  *    A5: GND on LCD
-
- *    Gnd: Gnd on other Pico
- *    3.3v: B3 on other Pico
- *    B3: 3.3v on other Pico
- *    B6: B7 on other Pico
- *    B7: B6 on other Pico
  */
 
 var OutputBlock = require("http://127.0.0.1/benblocks/blocks/output/index.js");
@@ -46,15 +40,14 @@ function ScreenBlock(inputSerial, outputSerial) {
 
     // Init LCD
     var g = require("PCD8544").connect(spi,B13,B14,B15, function() {
-      ////console.log('Screen ready');
       g.clear();
       g.flip();
       resolve(g);
     });
   }.bind(this));
 
-  this.output.on('objectReceived', this.objectReceived.bind(this));
-  this.output.on('disconnect', this.clearScreen.bind(this));
+  this.input.on('objectReceived', this.objectReceived.bind(this));
+  this.input.on('disconnect', this.clearScreen.bind(this));
 }
 
 ScreenBlock.prototype = Object.create(OutputBlock.prototype);
@@ -62,19 +55,23 @@ ScreenBlock.prototype.constructor = ScreenBlock;
 
 ScreenBlock.prototype.objectReceived = function(obj) {
 
-  //console.log('ScreenBlock: displaying graphic');
-
   this.screenReady.then(function(g) {
     g.clear();
 
-    obj.imageValue.buffer = E.toArrayBuffer(atob(obj.imageValue.buffer));
+    try {
+      obj.imageValue.buffer = E.toArrayBuffer(atob(obj.imageValue.buffer));
 
-    var xOffset = Math.floor((this.dimensions.width - obj.imageValue.width) / 2);
-    var yOffset = Math.floor((this.dimensions.height - obj.imageValue.height) / 2);
+      var xOffset = Math.floor((this.dimensions.width - obj.imageValue.width) / 2);
+      var yOffset = Math.floor((this.dimensions.height - obj.imageValue.height) / 2);
 
-    //g.drawRect(0, 0, this.dimensions.width-1, this.dimensions.height-1);  // Draw border (useful for debugging)
-    g.drawImage(obj.imageValue, xOffset, yOffset);  // Draw raw image
-    //this.drawImages(obj.imageValue, obj.integerValue, g); // Draw resized image
+      //g.drawRect(0, 0, this.dimensions.width-1, this.dimensions.height-1);  // Draw border (useful for debugging)
+      g.drawImage(obj.imageValue, xOffset, yOffset);  // Draw raw image
+      //this.drawImages(obj.imageValue, obj.integerValue, g); // Draw resized image
+    }
+    catch(e) {
+      console.log("Error - image not successfully received:", obj);
+    }
+
     g.flip(); // send the graphics to the display
 
   }.bind(this));

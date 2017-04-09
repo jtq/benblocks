@@ -1,15 +1,5 @@
 var EntityBlock = require("http://127.0.0.1/benblocks/blocks/entity/index.js");
 
-/****
- * Hardware spec:
- *  Pins:
- *    Gnd: Gnd on other Pico
- *    3.3v: B3 on other Pico
- *    B3: 3.3v on other Pico
- *    B6: B7 on other Pico
- *    B7: B6 on other Pico
- */
-
 // Data value of block
 
 var blockData = {

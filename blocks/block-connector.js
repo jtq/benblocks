@@ -57,27 +57,22 @@ function BlockConnector(serial, txPin, rxPin, /*announcePin,*/ listenPin) {
 }
 
 BlockConnector.prototype.sendObject = function(obj) {
-  //console.log('BlockConnector: sending object');
-  
   var strRepresentation = JSON.stringify(obj);
-  //console.log('BlockConnector: stringified object');
-
   this.serial.print(this.SOT);
   this.serial.print(strRepresentation);
   this.serial.print(this.EOT);
-
-  //console.log('BlockConnector: sent object');
 };
 
-BlockConnector.prototype.processDataChunk = function(data) { // Data received through serial connection
-
-  //console.log('BlockConnector: received data chunk', data);
-
+// Data received through serial connection
+BlockConnector.prototype.processDataChunk = function(data) {
   var sOTIndex = data.indexOf(this.SOT);
   var eOTIndex = data.indexOf(this.EOT);
-
   var messageStart = sOTIndex === -1 ? 0 : sOTIndex+1;
   var messageEnd = eOTIndex === -1 ? data.length : eOTIndex;
+
+  if(E.getErrorFlags().indexOf("FIFO_FULL") !== -1) {
+    console.log("Error - FIFO buffer overflow");
+  }
 
   if(sOTIndex !== -1) { // If data includes SOT, replace existing buffer
     this.buffer = data.substring(messageStart, messageEnd);
@@ -86,19 +81,20 @@ BlockConnector.prototype.processDataChunk = function(data) { // Data received th
     this.buffer += data.substring(messageStart, messageEnd);
   }
 
-  if(eOTIndex !== -1) { // ctrl+D - End of Transmission character was encountered
-    //console.log('BlockConnector: data received');
+  if(eOTIndex !== -1) {
     try {
-      var obj = JSON.parse(this.buffer);  // Set this.data to data received from upstream block
-      //console.log('BlockConnector: object parsed');
-      this.fire('objectReceived', obj);
+      var obj = JSON.parse(this.buffer);
+      if(obj) {
+        this.fire('objectReceived', obj);
+      }
+      else {
+        throw new Error("Could not parse buffer as valid JSON");
+      }
     }
     catch(e) {
-      console.log("Error parsing message (" + e + ") -->", this.buffer, "<--");
+      console.log("Error parsing message (" + e.toString() + ") -->", this.buffer, "<--");
     }
-    finally {
-      this.buffer = '';  // And reset buffer
-    }
+    this.buffer = '';
   }
 };
 
